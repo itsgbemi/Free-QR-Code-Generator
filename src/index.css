@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #7d2ae8;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f5f3ff;
+  
+  --font-sans: "Zalando Sans", "Outfit", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+}
+
+.bg-hero-gradient {
+  background: linear-gradient(135deg, #07B9CE 0%, #3969E7 50%, #7d2ae8 100%);
+}
