@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { BrowserRouter, Routes, Route, Link as RouterLink, useLocation } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { 
   Type, 
@@ -18,7 +19,9 @@ import {
   Download, 
   RefreshCw,
   Check,
-  ChevronRight
+  ChevronRight,
+  Home as HomeIcon,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -89,7 +92,39 @@ function FAQItem({ question, children }: { question: string; children: React.Rea
   );
 }
 
-export default function App() {
+function NotFound() {
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans flex flex-col items-center justify-center p-8 text-center">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-md w-full space-y-8"
+      >
+        <div className="relative inline-block">
+          <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+          <AlertCircle size={120} className="text-primary relative" />
+        </div>
+        <div className="space-y-4">
+          <h1 className="text-6xl font-black text-slate-900 tracking-tighter">404</h1>
+          <h2 className="text-3xl font-bold text-slate-800">Page Not Found</h2>
+          <p className="text-slate-500 text-lg leading-relaxed">
+            Oops! The page you're looking for doesn't exist or has been moved. 
+            Let's get you back to generating some QR codes.
+          </p>
+        </div>
+        <RouterLink 
+          to="/"
+          className="inline-flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-2xl font-black text-lg hover:bg-primary/90 transition-all hover:scale-105 shadow-xl shadow-primary/20"
+        >
+          <HomeIcon size={20} />
+          Back to Home
+        </RouterLink>
+      </motion.div>
+    </div>
+  );
+}
+
+function Home() {
   const [settings, setSettings] = useState<QRSettings>({
     type: 'URL',
     size: 300,
@@ -117,6 +152,11 @@ export default function App() {
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const generatorRef = useRef<HTMLDivElement>(null);
+
+  const scrollToGenerator = () => {
+    generatorRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const contentTypes: { id: ContentType; icon: React.ReactNode; label: string }[] = [
     { id: 'Text', icon: <Type size={18} />, label: 'Text' },
@@ -209,18 +249,11 @@ export default function App() {
     document.body.removeChild(link);
   };
 
-  const scrollToGenerator = () => {
-    const element = document.getElementById('generator-section');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
       {/* Hero Section with Gradient */}
       <div className="bg-hero-gradient pt-24 pb-40 text-left text-white">
-        <div className="max-w-[1200px] mx-auto px-8 md:px-12">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-12">
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -248,12 +281,12 @@ export default function App() {
         </div>
       </div>
 
-      <main className="max-w-[1200px] mx-auto px-8 md:px-12 -mt-24 pb-20">
-        <div id="generator-section" className="grid grid-cols-1 lg:grid-cols-12 gap-8 scroll-mt-24">
+      <main className="max-w-[1200px] mx-auto px-4 md:px-12 -mt-24 pb-20">
+        <div ref={generatorRef} className="grid grid-cols-1 lg:grid-cols-12 gap-8 scroll-mt-24">
           {/* Left Column: Configuration */}
           <div className="lg:col-span-7 space-y-8">
             {/* Step 1: Content Type */}
-            <section className="bg-white p-8 rounded-[40px] shadow-2xl border border-slate-100">
+            <section className="bg-white p-8 rounded-3xl shadow-2xl border border-slate-100">
               <div className="flex items-center gap-3 mb-8">
                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">Select Content Type</h2>
               </div>
@@ -264,14 +297,14 @@ export default function App() {
                     key={type.id}
                     onClick={() => setSettings(prev => ({ ...prev, type: type.id }))}
                     className={cn(
-                      "flex flex-col items-center justify-center p-5 rounded-[32px] border-2 transition-all gap-3 group",
+                      "flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all gap-3 group",
                       settings.type === type.id 
                         ? "border-primary bg-primary/5 text-primary shadow-md" 
                         : "border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200 hover:bg-white"
                     )}
                   >
                     <div className={cn(
-                      "p-3 rounded-2xl transition-colors",
+                      "p-3 rounded-xl transition-colors",
                       settings.type === type.id ? "bg-primary text-white" : "bg-white text-slate-400 group-hover:text-primary"
                     )}>
                       {type.icon}
@@ -283,7 +316,7 @@ export default function App() {
             </section>
 
             {/* Step 2: Content Input */}
-            <section className="bg-white p-8 rounded-[40px] shadow-2xl border border-slate-100">
+            <section className="bg-white p-8 rounded-3xl shadow-2xl border border-slate-100">
               <div className="flex items-center gap-3 mb-8">
                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">Enter Content</h2>
               </div>
@@ -297,7 +330,7 @@ export default function App() {
                       placeholder="https://example.com"
                       value={settings.url}
                       onChange={(e) => setSettings(prev => ({ ...prev, url: e.target.value }))}
-                      className="w-full p-6 rounded-[24px] border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium"
+                      className="w-full p-6 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium"
                     />
                   </div>
                 )}
@@ -309,7 +342,7 @@ export default function App() {
                       value={settings.text}
                       onChange={(e) => setSettings(prev => ({ ...prev, text: e.target.value }))}
                       placeholder="Add your text here..."
-                      className="w-full p-6 rounded-[24px] border-2 border-slate-100 focus:border-primary outline-none transition-all min-h-[180px] resize-none text-lg font-medium"
+                      className="w-full p-6 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all min-h-[180px] resize-none text-lg font-medium"
                     />
                   </div>
                 )}
@@ -322,7 +355,7 @@ export default function App() {
                       placeholder="+1 234 567 890"
                       value={settings.phone}
                       onChange={(e) => setSettings(prev => ({ ...prev, phone: e.target.value }))}
-                      className="w-full p-6 rounded-[24px] border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium"
+                      className="w-full p-6 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium"
                     />
                   </div>
                 )}
@@ -336,7 +369,7 @@ export default function App() {
                         placeholder="+1 234 567 890"
                         value={settings.smsPhone}
                         onChange={(e) => setSettings(prev => ({ ...prev, smsPhone: e.target.value }))}
-                        className="w-full p-6 rounded-[24px] border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium"
+                        className="w-full p-6 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium"
                       />
                     </div>
                     <div className="space-y-4">
@@ -345,7 +378,7 @@ export default function App() {
                         value={settings.smsMessage}
                         onChange={(e) => setSettings(prev => ({ ...prev, smsMessage: e.target.value }))}
                         placeholder="Enter your SMS message..."
-                        className="w-full p-6 rounded-[24px] border-2 border-slate-100 focus:border-primary outline-none transition-all min-h-[120px] resize-none text-lg font-medium"
+                        className="w-full p-6 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all min-h-[120px] resize-none text-lg font-medium"
                       />
                     </div>
                   </div>
@@ -360,7 +393,7 @@ export default function App() {
                         placeholder="hello@example.com"
                         value={settings.emailRecipient}
                         onChange={(e) => setSettings(prev => ({ ...prev, emailRecipient: e.target.value }))}
-                        className="w-full p-6 rounded-[24px] border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium"
+                        className="w-full p-6 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium"
                       />
                     </div>
                     <div className="space-y-4">
@@ -370,7 +403,7 @@ export default function App() {
                         placeholder="Inquiry about services"
                         value={settings.emailSubject}
                         onChange={(e) => setSettings(prev => ({ ...prev, emailSubject: e.target.value }))}
-                        className="w-full p-6 rounded-[24px] border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium"
+                        className="w-full p-6 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium"
                       />
                     </div>
                     <div className="space-y-4">
@@ -379,7 +412,7 @@ export default function App() {
                         value={settings.emailBody}
                         onChange={(e) => setSettings(prev => ({ ...prev, emailBody: e.target.value }))}
                         placeholder="Write your email content here..."
-                        className="w-full p-6 rounded-[24px] border-2 border-slate-100 focus:border-primary outline-none transition-all min-h-[120px] resize-none text-lg font-medium"
+                        className="w-full p-6 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all min-h-[120px] resize-none text-lg font-medium"
                       />
                     </div>
                   </div>
@@ -394,7 +427,7 @@ export default function App() {
                         placeholder="My Home WiFi"
                         value={settings.wifiSsid}
                         onChange={(e) => setSettings(prev => ({ ...prev, wifiSsid: e.target.value }))}
-                        className="w-full p-6 rounded-[24px] border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium"
+                        className="w-full p-6 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium"
                       />
                     </div>
                     <div className="space-y-4">
@@ -404,7 +437,7 @@ export default function App() {
                         placeholder="WiFi Password"
                         value={settings.wifiPassword}
                         onChange={(e) => setSettings(prev => ({ ...prev, wifiPassword: e.target.value }))}
-                        className="w-full p-6 rounded-[24px] border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium"
+                        className="w-full p-6 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium"
                       />
                     </div>
                     <div className="space-y-4">
@@ -412,7 +445,7 @@ export default function App() {
                       <select 
                         value={settings.wifiEncryption}
                         onChange={(e) => setSettings(prev => ({ ...prev, wifiEncryption: e.target.value as any }))}
-                        className="w-full p-6 rounded-[24px] border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium bg-white"
+                        className="w-full p-6 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all text-lg font-medium bg-white"
                       >
                         <option value="WPA">WPA/WPA2</option>
                         <option value="WEP">WEP</option>
@@ -432,7 +465,7 @@ export default function App() {
                           placeholder="John Doe"
                           value={settings.vCardName}
                           onChange={(e) => setSettings(prev => ({ ...prev, vCardName: e.target.value }))}
-                          className="w-full p-4 rounded-[16px] border-2 border-slate-100 focus:border-primary outline-none transition-all text-base font-medium"
+                          className="w-full p-4 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all text-base font-medium"
                         />
                       </div>
                       <div className="space-y-2">
@@ -442,7 +475,7 @@ export default function App() {
                           placeholder="+1 234 567 890"
                           value={settings.vCardPhone}
                           onChange={(e) => setSettings(prev => ({ ...prev, vCardPhone: e.target.value }))}
-                          className="w-full p-4 rounded-[16px] border-2 border-slate-100 focus:border-primary outline-none transition-all text-base font-medium"
+                          className="w-full p-4 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all text-base font-medium"
                         />
                       </div>
                       <div className="space-y-2">
@@ -452,7 +485,7 @@ export default function App() {
                           placeholder="john@example.com"
                           value={settings.vCardEmail}
                           onChange={(e) => setSettings(prev => ({ ...prev, vCardEmail: e.target.value }))}
-                          className="w-full p-4 rounded-[16px] border-2 border-slate-100 focus:border-primary outline-none transition-all text-base font-medium"
+                          className="w-full p-4 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all text-base font-medium"
                         />
                       </div>
                       <div className="space-y-2">
@@ -462,7 +495,7 @@ export default function App() {
                           placeholder="https://example.com"
                           value={settings.vCardUrl}
                           onChange={(e) => setSettings(prev => ({ ...prev, vCardUrl: e.target.value }))}
-                          className="w-full p-4 rounded-[16px] border-2 border-slate-100 focus:border-primary outline-none transition-all text-base font-medium"
+                          className="w-full p-4 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all text-base font-medium"
                         />
                       </div>
                       <div className="space-y-2">
@@ -472,7 +505,7 @@ export default function App() {
                           placeholder="Company Name"
                           value={settings.vCardOrg}
                           onChange={(e) => setSettings(prev => ({ ...prev, vCardOrg: e.target.value }))}
-                          className="w-full p-4 rounded-[16px] border-2 border-slate-100 focus:border-primary outline-none transition-all text-base font-medium"
+                          className="w-full p-4 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all text-base font-medium"
                         />
                       </div>
                       <div className="space-y-2">
@@ -482,7 +515,7 @@ export default function App() {
                           placeholder="Software Engineer"
                           value={settings.vCardTitle}
                           onChange={(e) => setSettings(prev => ({ ...prev, vCardTitle: e.target.value }))}
-                          className="w-full p-4 rounded-[16px] border-2 border-slate-100 focus:border-primary outline-none transition-all text-base font-medium"
+                          className="w-full p-4 rounded-2xl border-2 border-slate-100 focus:border-primary outline-none transition-all text-base font-medium"
                         />
                       </div>
                     </div>
@@ -490,7 +523,7 @@ export default function App() {
                 )}
 
                 {(settings.type === 'Image' || settings.type === 'PDF') && (
-                  <div className="p-12 border-4 border-dashed border-slate-100 rounded-[32px] text-center space-y-4">
+                  <div className="p-12 border-4 border-dashed border-slate-100 rounded-3xl text-center space-y-4">
                     <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-300">
                       {settings.type === 'Image' ? <ImageIcon size={32} /> : <FileText size={32} />}
                     </div>
@@ -501,7 +534,7 @@ export default function App() {
             </section>
 
             {/* Step 3: Customization */}
-            <section className="bg-white p-8 rounded-[40px] shadow-2xl border border-slate-100">
+            <section className="bg-white p-8 rounded-3xl shadow-2xl border border-slate-100">
               <div className="flex items-center gap-3 mb-8">
                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">Choose Colors & Size</h2>
               </div>
@@ -513,32 +546,60 @@ export default function App() {
                     {/* Background Color */}
                     <div className="space-y-4">
                       <label className="text-xs font-bold text-slate-400">Background</label>
-                      <div className="flex items-center gap-4 bg-slate-50 p-2 pr-4 rounded-full border-2 border-slate-100 hover:border-primary/20 transition-colors group">
-                        <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm group-hover:scale-105 transition-transform">
+                      <div className="flex items-center gap-6">
+                        <div className="relative w-16 h-16 rounded-full overflow-hidden border-4 border-white shadow-xl hover:scale-110 transition-transform cursor-pointer group" style={{ backgroundColor: settings.bgColor }}>
                           <input 
                             type="color" 
                             value={settings.bgColor}
                             onChange={(e) => setSettings(prev => ({ ...prev, bgColor: e.target.value }))}
-                            className="absolute inset-[-10px] w-[200%] h-[200%] cursor-pointer border-none p-0"
+                            className="absolute inset-0 w-full h-full cursor-pointer opacity-0"
+                          />
+                          <div className="absolute inset-0 border-2 border-slate-100 rounded-full pointer-events-none" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hex Code</span>
+                          <input 
+                            type="text"
+                            value={settings.bgColor}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val.startsWith('#') && val.length <= 7) {
+                                setSettings(prev => ({ ...prev, bgColor: val }));
+                              }
+                            }}
+                            className="text-xl font-mono font-black text-slate-900 uppercase bg-transparent border-none outline-none w-24"
                           />
                         </div>
-                        <span className="text-sm font-mono font-black text-slate-600 uppercase flex-1">{settings.bgColor}</span>
                       </div>
                     </div>
 
                     {/* Dot Color */}
                     <div className="space-y-4">
                       <label className="text-xs font-bold text-slate-400">Dot Color</label>
-                      <div className="flex items-center gap-4 bg-slate-50 p-2 pr-4 rounded-full border-2 border-slate-100 hover:border-primary/20 transition-colors group">
-                        <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm group-hover:scale-105 transition-transform">
+                      <div className="flex items-center gap-6">
+                        <div className="relative w-16 h-16 rounded-full overflow-hidden border-4 border-white shadow-xl hover:scale-110 transition-transform cursor-pointer group" style={{ backgroundColor: settings.fgColor }}>
                           <input 
                             type="color" 
                             value={settings.fgColor}
                             onChange={(e) => setSettings(prev => ({ ...prev, fgColor: e.target.value }))}
-                            className="absolute inset-[-10px] w-[200%] h-[200%] cursor-pointer border-none p-0"
+                            className="absolute inset-0 w-full h-full cursor-pointer opacity-0"
+                          />
+                          <div className="absolute inset-0 border-2 border-slate-100 rounded-full pointer-events-none" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hex Code</span>
+                          <input 
+                            type="text"
+                            value={settings.fgColor}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val.startsWith('#') && val.length <= 7) {
+                                setSettings(prev => ({ ...prev, fgColor: val }));
+                              }
+                            }}
+                            className="text-xl font-mono font-black text-slate-900 uppercase bg-transparent border-none outline-none w-24"
                           />
                         </div>
-                        <span className="text-sm font-mono font-black text-slate-600 uppercase flex-1">{settings.fgColor}</span>
                       </div>
                     </div>
                   </div>
@@ -570,15 +631,15 @@ export default function App() {
           {/* Right Column: Preview */}
           <div className="lg:col-span-5">
             <div className="sticky top-8">
-              <div className="bg-white p-10 rounded-[56px] shadow-2xl border border-slate-100 text-center space-y-10">
+              <div className="bg-white p-10 rounded-3xl shadow-2xl border border-slate-100 text-center space-y-10">
                 <div className="space-y-3">
                   <h2 className="text-4xl font-black text-slate-900 tracking-tight">Preview</h2>
                   <p className="text-slate-400 font-bold text-xs">Ready for instant download</p>
                 </div>
 
                 <div className="relative group">
-                  <div className="absolute -inset-8 bg-primary/5 rounded-[80px] blur-3xl group-hover:bg-primary/10 transition-all duration-700"></div>
-                  <div className="relative bg-white p-10 rounded-[64px] shadow-inner border border-slate-50 flex items-center justify-center min-h-[400px]">
+                  <div className="absolute -inset-8 bg-primary/5 rounded-3xl blur-3xl group-hover:bg-primary/10 transition-all duration-700"></div>
+                  <div className="relative bg-white p-10 rounded-3xl shadow-inner border border-slate-50 flex items-center justify-center min-h-[400px]">
                     <AnimatePresence mode="wait">
                       {qrDataUrl ? (
                         <motion.div
@@ -591,10 +652,10 @@ export default function App() {
                           <img 
                             src={qrDataUrl} 
                             alt="QR Code Preview" 
-                            className="max-w-full h-auto rounded-3xl shadow-2xl"
+                            className="max-w-full h-auto rounded-2xl shadow-2xl"
                           />
                           {isGenerating && (
-                            <div className="absolute inset-0 bg-white/60 backdrop-blur-[4px] flex items-center justify-center rounded-3xl">
+                            <div className="absolute inset-0 bg-white/60 backdrop-blur-[4px] flex items-center justify-center rounded-2xl">
                               <RefreshCw className="animate-spin text-primary" size={64} />
                             </div>
                           )}
@@ -606,7 +667,7 @@ export default function App() {
                           animate={{ opacity: 1 }}
                           className="text-slate-100 flex flex-col items-center gap-8"
                         >
-                          <div className="w-64 h-64 border-4 border-dashed border-slate-50 rounded-[56px] flex items-center justify-center">
+                          <div className="w-64 h-64 border-4 border-dashed border-slate-50 rounded-3xl flex items-center justify-center">
                             <ImageIcon size={80} />
                           </div>
                           <p className="text-xl font-black">Preview</p>
@@ -621,7 +682,7 @@ export default function App() {
                     disabled={!qrDataUrl}
                     onClick={handleDownload}
                     className={cn(
-                      "w-full py-6 rounded-[32px] font-black text-2xl flex items-center justify-center gap-4 transition-all shadow-2xl",
+                      "w-full py-6 rounded-3xl font-black text-2xl flex items-center justify-center gap-4 transition-all shadow-2xl",
                       qrDataUrl 
                         ? "bg-primary text-white hover:bg-[#6b24c7] shadow-primary/30 hover:shadow-primary/40 active:scale-[0.96]" 
                         : "bg-slate-100 text-slate-200 cursor-not-allowed"
@@ -636,36 +697,43 @@ export default function App() {
           </div>
         </div>
         
-        {/* Why use section */}
-        <section className="mt-40 max-w-[1200px] mx-auto text-center space-y-20 px-8 md:px-12">
-          <h2 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tight">Why use our Free QR Code Generator?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div className="p-10 rounded-[48px] bg-white shadow-xl border border-slate-50 space-y-6 text-left group hover:bg-primary transition-colors duration-500">
-              <div className="text-6xl font-black text-primary/10 group-hover:text-white/20 transition-colors">01</div>
-              <h3 className="font-black text-2xl group-hover:text-white transition-colors">No Sign Up</h3>
-              <p className="text-slate-500 group-hover:text-white/80 transition-colors leading-relaxed">Start generating immediately. We don't ask for your email or personal data. Privacy is our priority.</p>
-            </div>
-            <div className="p-10 rounded-[48px] bg-white shadow-xl border border-slate-50 space-y-6 text-left group hover:bg-primary transition-colors duration-500">
-              <div className="text-6xl font-black text-primary/10 group-hover:text-white/20 transition-colors">02</div>
-              <h3 className="font-black text-2xl group-hover:text-white transition-colors">No Subscription</h3>
-              <p className="text-slate-500 group-hover:text-white/80 transition-colors leading-relaxed">Our tool is 100% free forever. No monthly fees or hidden costs for high-res downloads.</p>
-            </div>
-            <div className="p-10 rounded-[48px] bg-white shadow-xl border border-slate-100 space-y-6 text-left group hover:bg-primary transition-colors duration-500">
-              <div className="text-6xl font-black text-primary/10 group-hover:text-white/20 transition-colors">03</div>
-              <h3 className="font-black text-2xl group-hover:text-white transition-colors">High Quality</h3>
-              <p className="text-slate-500 group-hover:text-white/80 transition-colors leading-relaxed">Download professional-grade QR codes suitable for print, business cards, and digital displays.</p>
-            </div>
-          </div>
-        </section>
-
         {/* Frequently Asked Questions section */}
-        <section className="mt-40 space-y-20 max-w-[1200px] mx-auto px-8 md:px-12">
+        <section className="mt-40 space-y-20 max-w-[1200px] mx-auto px-4 md:px-12">
           <div className="text-left space-y-6 mb-20">
             <h2 className="text-6xl md:text-7xl font-black text-slate-900 tracking-tighter">Frequently Asked Questions</h2>
             <p className="text-slate-500 text-xl font-medium">Everything you need to know about QR codes and how to use them effectively.</p>
           </div>
 
           <div className="space-y-4">
+            <FAQItem question="Why use our Free QR Code Generator?">
+              <div className="space-y-6">
+                <p>Our tool is built with three core principles in mind to provide the best experience for our users:</p>
+                <div className="space-y-8">
+                  <div className="flex gap-6">
+                    <span className="text-primary font-black text-4xl shrink-0">01.</span>
+                    <div className="space-y-2">
+                      <h4 className="font-black text-slate-900 text-xl">No Sign Up</h4>
+                      <p className="text-slate-500">Start generating immediately. We don't ask for your email or personal data. Privacy is our priority.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-6">
+                    <span className="text-primary font-black text-4xl shrink-0">02.</span>
+                    <div className="space-y-2">
+                      <h4 className="font-black text-slate-900 text-xl">No Subscription</h4>
+                      <p className="text-slate-500">Our tool is 100% free forever. No monthly fees or hidden costs for high-res downloads.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-6">
+                    <span className="text-primary font-black text-4xl shrink-0">03.</span>
+                    <div className="space-y-2">
+                      <h4 className="font-black text-slate-900 text-xl">High Quality</h4>
+                      <p className="text-slate-500">Download professional-grade QR codes suitable for print, business cards, and digital displays.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </FAQItem>
+
             <FAQItem question="What is a QR code?">
               <p>
                 A QR code (Quick Response code) is a type of matrix barcode first designed in 1994 for the automotive industry in Japan. 
@@ -708,14 +776,14 @@ export default function App() {
 
         {/* Callout Section */}
         <section className="mt-40">
-          <div className="bg-hero-gradient p-12 md:p-24 rounded-[64px] text-center text-white space-y-10 shadow-2xl shadow-primary/20">
+          <div className="bg-hero-gradient p-12 md:p-24 rounded-3xl text-center text-white space-y-10 shadow-2xl shadow-primary/20">
             <h2 className="text-5xl md:text-7xl font-black">Ready to get started?</h2>
             <p className="text-white/80 text-xl md:text-2xl font-medium max-w-2xl mx-auto">
               Create your professional QR code in less than 30 seconds. No strings attached.
             </p>
             <button 
               onClick={scrollToGenerator}
-              className="bg-white text-primary px-12 py-6 rounded-[32px] font-black text-2xl hover:scale-105 transition-transform shadow-xl active:scale-95"
+              className="bg-white text-primary px-12 py-6 rounded-3xl font-black text-2xl hover:scale-105 transition-transform shadow-xl active:scale-95"
             >
               Create QR code for free
             </button>
@@ -723,8 +791,8 @@ export default function App() {
         </section>
       </main>
       
-      <footer className="bg-white py-20 px-8 md:px-12 border-t border-slate-100">
-        <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-black font-medium">
+      <footer className="bg-white py-20 px-4 md:px-12 border-t border-slate-100">
+        <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8 text-black font-medium text-left">
           <p>© {new Date().getFullYear()} Free QR Code Generator. All rights reserved.</p>
           <p>
             Created by{" "}
@@ -740,5 +808,16 @@ export default function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
