@@ -17,3 +17,25 @@
 .bg-hero-gradient {
   background: linear-gradient(135deg, #07B9CE 0%, #3969E7 50%, #7d2ae8 100%);
 }
+
+.custom-color-picker .react-colorful {
+  width: 100% !important;
+  height: 200px !important;
+  border-radius: 1.5rem !important;
+  border: none !important;
+}
+
+.custom-color-picker .react-colorful__saturation {
+  border-radius: 1.5rem 1.5rem 0 0 !important;
+  border-bottom: none !important;
+}
+
+.custom-color-picker .react-colorful__hue {
+  border-radius: 0 0 1.5rem 1.5rem !important;
+  height: 12px !important;
+}
+
+.custom-color-picker .react-colorful__pointer {
+  width: 24px !important;
+  height: 24px !important;
+}

@@ -12,8 +12,6 @@ import {
   Phone, 
   MessageSquare, 
   User, 
-  Image as ImageIcon, 
-  FileText, 
   Wifi, 
   Mail, 
   Download, 
@@ -21,12 +19,17 @@ import {
   Check,
   ChevronRight,
   Home as HomeIcon,
-  AlertCircle
+  AlertCircle,
+  Utensils,
+  Briefcase,
+  Pencil,
+  QrCode
 } from 'lucide-react';
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
+import { HexColorPicker } from 'react-colorful';
 
-type ContentType = 'Text' | 'URL' | 'Phone' | 'SMS' | 'vCard' | 'Image' | 'PDF' | 'WiFi' | 'Email';
+type ContentType = 'Text' | 'URL' | 'Phone' | 'SMS' | 'vCard' | 'WiFi' | 'Email';
 
 interface QRSettings {
   type: ContentType;
@@ -51,6 +54,117 @@ interface QRSettings {
   vCardOrg: string;
   vCardTitle: string;
   vCardUrl: string;
+}
+
+function ColorPicker({ color, onChange, label }: { color: string; onChange: (color: string) => void; label: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [position, setPosition] = useState<'top' | 'bottom'>('bottom');
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        popoverRef.current && 
+        !popoverRef.current.contains(event.target as Node) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      
+      if (triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        setPosition(spaceBelow < 320 ? 'top' : 'bottom');
+      }
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  return (
+    <div className="space-y-3 relative" ref={triggerRef}>
+      <label className="text-xs font-bold text-slate-400 uppercase tracking-tight">{label}</label>
+      <div className="flex items-center p-1 gap-2 rounded-xl border border-slate-200 focus-within:border-primary/50 transition-all">
+        <div className="relative shrink-0">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-10 h-10 flex items-center justify-center group relative overflow-hidden transition-all cursor-pointer rounded-lg"
+            style={{ backgroundColor: color }}
+          >
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+            <Pencil size={16} className={cn(
+              "relative z-10 transition-colors",
+              color.toLowerCase() === '#ffffff' ? "text-slate-800" : "text-white"
+            )} />
+          </button>
+
+          <AnimatePresence>
+            {isOpen && (
+              <motion.div
+                ref={popoverRef}
+                initial={{ opacity: 0, y: position === 'bottom' ? 10 : -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: position === 'bottom' ? 10 : -10, scale: 0.95 }}
+                className={cn(
+                  "absolute z-50 left-0 bg-white p-5 rounded-2xl shadow-2xl border border-slate-100 space-y-4 min-w-[240px]",
+                  position === 'bottom' ? "top-full mt-2" : "bottom-full mb-2"
+                )}
+              >
+                <div className="custom-color-picker origin-top-left">
+                  <HexColorPicker color={color} onChange={onChange} />
+                </div>
+                
+                <div className="grid grid-cols-6 gap-2">
+                  {['#000000', '#ffffff', '#7D2AE8', '#07B9CE', '#3969E7', '#F27D26', '#E11D48', '#10B981', '#F59E0B', '#6366F1', '#D946EF', '#8B5CF6'].map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => onChange(c)}
+                      className="w-full aspect-square rounded-md border border-slate-100 shadow-sm hover:scale-110 transition-transform"
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+                
+                <div className="flex items-center gap-3 pt-2 border-t border-slate-50">
+                  <div 
+                    className="w-8 h-8 rounded-full border border-slate-100 shadow-sm shrink-0" 
+                    style={{ backgroundColor: color }} 
+                  />
+                  <input 
+                    type="text"
+                    value={color}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val.startsWith('#') && val.length <= 7) {
+                        onChange(val);
+                      }
+                    }}
+                    className="flex-1 text-xs font-mono font-black text-slate-900 uppercase bg-slate-50 p-2 rounded-lg border-none outline-none focus:ring-1 focus:ring-primary/20"
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        <input 
+          type="text"
+          value={color}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val.startsWith('#') && val.length <= 7) {
+              onChange(val);
+            }
+          }}
+          className="flex-1 text-base font-mono font-bold text-slate-700 uppercase bg-transparent px-2 py-2 outline-none transition-all"
+          placeholder="#000000"
+        />
+      </div>
+    </div>
+  );
 }
 
 function FAQItem({ question, children }: { question: string; children: React.ReactNode }) {
@@ -105,8 +219,8 @@ function NotFound() {
           <AlertCircle size={120} className="text-primary relative" />
         </div>
         <div className="space-y-4">
-          <h1 className="text-6xl font-black text-slate-900 tracking-tighter">404</h1>
-          <h2 className="text-3xl font-bold text-slate-800">Page Not Found</h2>
+          <h1 className="text-6xl font-black text-slate-900 tracking-tight">404</h1>
+          <h2 className="text-3xl font-bold text-slate-800 tracking-tight">Page Not Found</h2>
           <p className="text-slate-500 text-lg leading-relaxed">
             Oops! The page you're looking for doesn't exist or has been moved. 
             Let's get you back to generating some QR codes.
@@ -159,15 +273,13 @@ function Home() {
   };
 
   const contentTypes: { id: ContentType; icon: React.ReactNode; label: string }[] = [
-    { id: 'Text', icon: <Type size={18} />, label: 'Text' },
     { id: 'URL', icon: <Link size={18} />, label: 'URL' },
+    { id: 'Text', icon: <Type size={18} />, label: 'Text' },
+    { id: 'WiFi', icon: <Wifi size={18} />, label: 'WiFi' },
+    { id: 'Email', icon: <Mail size={18} />, label: 'Email' },
     { id: 'Phone', icon: <Phone size={18} />, label: 'Phone' },
     { id: 'SMS', icon: <MessageSquare size={18} />, label: 'SMS' },
     { id: 'vCard', icon: <User size={18} />, label: 'vCard' },
-    { id: 'Image', icon: <ImageIcon size={18} />, label: 'Image' },
-    { id: 'PDF', icon: <FileText size={18} />, label: 'PDF' },
-    { id: 'WiFi', icon: <Wifi size={18} />, label: 'WiFi' },
-    { id: 'Email', icon: <Mail size={18} />, label: 'Email' },
   ];
 
   const generateQRCode = async () => {
@@ -178,6 +290,12 @@ function Home() {
       switch (settings.type) {
         case 'URL':
           finalContent = settings.url;
+          break;
+        case 'Menu':
+          finalContent = settings.menuUrl;
+          break;
+        case 'Business':
+          finalContent = settings.businessUrl;
           break;
         case 'Text':
           finalContent = settings.text;
@@ -257,7 +375,7 @@ function Home() {
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-8xl font-black mb-6"
+            className="text-5xl md:text-8xl font-black mb-6 tracking-tight"
           >
             Free <span className="text-white">QR Code</span> Generator
           </motion.h1>
@@ -324,7 +442,7 @@ function Home() {
               <div className="space-y-6">
                 {settings.type === 'URL' && (
                   <div className="space-y-4">
-                    <label className="block text-sm font-bold text-slate-700">Website URL</label>
+                    <label className="block text-sm font-bold text-slate-700 tracking-tight">Website URL</label>
                     <input 
                       type="url" 
                       placeholder="https://example.com"
@@ -337,7 +455,7 @@ function Home() {
 
                 {settings.type === 'Text' && (
                   <div className="space-y-4">
-                    <label className="block text-sm font-bold text-slate-700">Enter Text</label>
+                    <label className="block text-sm font-bold text-slate-700 tracking-tight">Enter Text</label>
                     <textarea
                       value={settings.text}
                       onChange={(e) => setSettings(prev => ({ ...prev, text: e.target.value }))}
@@ -349,7 +467,7 @@ function Home() {
 
                 {settings.type === 'Phone' && (
                   <div className="space-y-4">
-                    <label className="block text-sm font-bold text-slate-700">Phone Number</label>
+                    <label className="block text-sm font-bold text-slate-700 tracking-tight">Phone Number</label>
                     <input 
                       type="tel" 
                       placeholder="+1 234 567 890"
@@ -361,9 +479,9 @@ function Home() {
                 )}
 
                 {settings.type === 'SMS' && (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div className="space-y-4">
-                      <label className="block text-sm font-bold text-slate-700">Phone Number</label>
+                      <label className="block text-sm font-bold text-slate-700 tracking-tight">Phone Number</label>
                       <input 
                         type="tel" 
                         placeholder="+1 234 567 890"
@@ -373,7 +491,7 @@ function Home() {
                       />
                     </div>
                     <div className="space-y-4">
-                      <label className="block text-sm font-bold text-slate-700">Message</label>
+                      <label className="block text-sm font-bold text-slate-700 tracking-tight">Message</label>
                       <textarea
                         value={settings.smsMessage}
                         onChange={(e) => setSettings(prev => ({ ...prev, smsMessage: e.target.value }))}
@@ -387,7 +505,7 @@ function Home() {
                 {settings.type === 'Email' && (
                   <div className="space-y-4">
                     <div className="space-y-4">
-                      <label className="block text-sm font-bold text-slate-700">Email Address</label>
+                      <label className="block text-sm font-bold text-slate-700 tracking-tight">Email Address</label>
                       <input 
                         type="email" 
                         placeholder="hello@example.com"
@@ -397,7 +515,7 @@ function Home() {
                       />
                     </div>
                     <div className="space-y-4">
-                      <label className="block text-sm font-bold text-slate-700">Subject Line</label>
+                      <label className="block text-sm font-bold text-slate-700 tracking-tight">Subject Line</label>
                       <input 
                         type="text" 
                         placeholder="Inquiry about services"
@@ -407,7 +525,7 @@ function Home() {
                       />
                     </div>
                     <div className="space-y-4">
-                      <label className="block text-sm font-bold text-slate-700">Message Body</label>
+                      <label className="block text-sm font-bold text-slate-700 tracking-tight">Message Body</label>
                       <textarea
                         value={settings.emailBody}
                         onChange={(e) => setSettings(prev => ({ ...prev, emailBody: e.target.value }))}
@@ -421,7 +539,7 @@ function Home() {
                 {settings.type === 'WiFi' && (
                   <div className="space-y-4">
                     <div className="space-y-4">
-                      <label className="block text-sm font-bold text-slate-700">Network Name (SSID)</label>
+                      <label className="block text-sm font-bold text-slate-700 tracking-tight">Network Name (SSID)</label>
                       <input 
                         type="text" 
                         placeholder="My Home WiFi"
@@ -431,7 +549,7 @@ function Home() {
                       />
                     </div>
                     <div className="space-y-4">
-                      <label className="block text-sm font-bold text-slate-700">Password</label>
+                      <label className="block text-sm font-bold text-slate-700 tracking-tight">Password</label>
                       <input 
                         type="text" 
                         placeholder="WiFi Password"
@@ -441,7 +559,7 @@ function Home() {
                       />
                     </div>
                     <div className="space-y-4">
-                      <label className="block text-sm font-bold text-slate-700">Encryption Type</label>
+                      <label className="block text-sm font-bold text-slate-700 tracking-tight">Encryption Type</label>
                       <select 
                         value={settings.wifiEncryption}
                         onChange={(e) => setSettings(prev => ({ ...prev, wifiEncryption: e.target.value as any }))}
@@ -456,10 +574,10 @@ function Home() {
                 )}
 
                 {settings.type === 'vCard' && (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="block text-sm font-bold text-slate-700">Full Name</label>
+                        <label className="block text-sm font-bold text-slate-700 tracking-tight">Full Name</label>
                         <input 
                           type="text" 
                           placeholder="John Doe"
@@ -469,7 +587,7 @@ function Home() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="block text-sm font-bold text-slate-700">Phone Number</label>
+                        <label className="block text-sm font-bold text-slate-700 tracking-tight">Phone</label>
                         <input 
                           type="tel" 
                           placeholder="+1 234 567 890"
@@ -479,7 +597,7 @@ function Home() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="block text-sm font-bold text-slate-700">Email Address</label>
+                        <label className="block text-sm font-bold text-slate-700 tracking-tight">Email</label>
                         <input 
                           type="email" 
                           placeholder="john@example.com"
@@ -489,7 +607,7 @@ function Home() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="block text-sm font-bold text-slate-700">Website</label>
+                        <label className="block text-sm font-bold text-slate-700 tracking-tight">Website</label>
                         <input 
                           type="url" 
                           placeholder="https://example.com"
@@ -499,7 +617,7 @@ function Home() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="block text-sm font-bold text-slate-700">Company</label>
+                        <label className="block text-sm font-bold text-slate-700 tracking-tight">Company</label>
                         <input 
                           type="text" 
                           placeholder="Company Name"
@@ -509,7 +627,7 @@ function Home() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="block text-sm font-bold text-slate-700">Job Title</label>
+                        <label className="block text-sm font-bold text-slate-700 tracking-tight">Job Title</label>
                         <input 
                           type="text" 
                           placeholder="Software Engineer"
@@ -521,15 +639,6 @@ function Home() {
                     </div>
                   </div>
                 )}
-
-                {(settings.type === 'Image' || settings.type === 'PDF') && (
-                  <div className="p-12 border-4 border-dashed border-slate-100 rounded-3xl text-center space-y-4">
-                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-300">
-                      {settings.type === 'Image' ? <ImageIcon size={32} /> : <FileText size={32} />}
-                    </div>
-                    <p className="text-slate-400 font-medium">File upload coming soon. For now, please use a URL to your file.</p>
-                  </div>
-                )}
               </div>
             </section>
 
@@ -539,74 +648,25 @@ function Home() {
                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">Choose Colors & Size</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+              <div className="space-y-12">
                 <div className="space-y-6">
-                  <h3 className="text-sm font-bold text-slate-700">Colors</h3>
+                  <h3 className="text-sm font-bold text-slate-700 tracking-tight">Colors</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Background Color */}
-                    <div className="space-y-4">
-                      <label className="text-xs font-bold text-slate-400">Background</label>
-                      <div className="flex items-center gap-6">
-                        <div className="relative w-16 h-16 rounded-full overflow-hidden border-4 border-white shadow-xl hover:scale-110 transition-transform cursor-pointer group" style={{ backgroundColor: settings.bgColor }}>
-                          <input 
-                            type="color" 
-                            value={settings.bgColor}
-                            onChange={(e) => setSettings(prev => ({ ...prev, bgColor: e.target.value }))}
-                            className="absolute inset-0 w-full h-full cursor-pointer opacity-0"
-                          />
-                          <div className="absolute inset-0 border-2 border-slate-100 rounded-full pointer-events-none" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hex Code</span>
-                          <input 
-                            type="text"
-                            value={settings.bgColor}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val.startsWith('#') && val.length <= 7) {
-                                setSettings(prev => ({ ...prev, bgColor: val }));
-                              }
-                            }}
-                            className="text-xl font-mono font-black text-slate-900 uppercase bg-transparent border-none outline-none w-24"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Dot Color */}
-                    <div className="space-y-4">
-                      <label className="text-xs font-bold text-slate-400">Dot Color</label>
-                      <div className="flex items-center gap-6">
-                        <div className="relative w-16 h-16 rounded-full overflow-hidden border-4 border-white shadow-xl hover:scale-110 transition-transform cursor-pointer group" style={{ backgroundColor: settings.fgColor }}>
-                          <input 
-                            type="color" 
-                            value={settings.fgColor}
-                            onChange={(e) => setSettings(prev => ({ ...prev, fgColor: e.target.value }))}
-                            className="absolute inset-0 w-full h-full cursor-pointer opacity-0"
-                          />
-                          <div className="absolute inset-0 border-2 border-slate-100 rounded-full pointer-events-none" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hex Code</span>
-                          <input 
-                            type="text"
-                            value={settings.fgColor}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val.startsWith('#') && val.length <= 7) {
-                                setSettings(prev => ({ ...prev, fgColor: val }));
-                              }
-                            }}
-                            className="text-xl font-mono font-black text-slate-900 uppercase bg-transparent border-none outline-none w-24"
-                          />
-                        </div>
-                      </div>
-                    </div>
+                    <ColorPicker 
+                      label="Background" 
+                      color={settings.bgColor} 
+                      onChange={(color) => setSettings(prev => ({ ...prev, bgColor: color }))} 
+                    />
+                    <ColorPicker 
+                      label="Dot Color" 
+                      color={settings.fgColor} 
+                      onChange={(color) => setSettings(prev => ({ ...prev, fgColor: color }))} 
+                    />
                   </div>
                 </div>
 
                 <div className="space-y-6">
-                  <h3 className="text-sm font-bold text-slate-700">Select Size</h3>
+                  <h3 className="text-sm font-bold text-slate-700 tracking-tight">Select Size</h3>
                   <div className="space-y-6">
                     <input 
                       type="range" 
@@ -617,7 +677,7 @@ function Home() {
                       onChange={(e) => setSettings(prev => ({ ...prev, size: parseInt(e.target.value) }))}
                       className="w-full h-4 bg-slate-100 rounded-full appearance-none cursor-pointer accent-primary"
                     />
-                    <div className="flex justify-between text-xs font-bold text-slate-400">
+                    <div className="flex justify-between text-xs font-bold text-slate-400 tracking-tight">
                       <span>100px</span>
                       <span className="text-primary text-lg">{settings.size}px</span>
                       <span>1000px</span>
@@ -631,15 +691,14 @@ function Home() {
           {/* Right Column: Preview */}
           <div className="lg:col-span-5">
             <div className="sticky top-8">
-              <div className="bg-white p-10 rounded-3xl shadow-2xl border border-slate-100 text-center space-y-10">
-                <div className="space-y-3">
+              <div className="bg-white p-6 md:p-10 rounded-3xl shadow-2xl border border-slate-100 text-center space-y-6 md:space-y-10">
+                <div className="space-y-2 md:space-y-3">
                   <h2 className="text-4xl font-black text-slate-900 tracking-tight">Preview</h2>
-                  <p className="text-slate-400 font-bold text-xs">Ready for instant download</p>
                 </div>
 
                 <div className="relative group">
                   <div className="absolute -inset-8 bg-primary/5 rounded-3xl blur-3xl group-hover:bg-primary/10 transition-all duration-700"></div>
-                  <div className="relative bg-white p-10 rounded-3xl shadow-inner border border-slate-50 flex items-center justify-center min-h-[400px]">
+                  <div className="relative bg-white p-6 md:p-10 rounded-3xl shadow-inner border border-slate-50 flex items-center justify-center min-h-[300px] md:min-h-[400px]">
                     <AnimatePresence mode="wait">
                       {qrDataUrl ? (
                         <motion.div
@@ -665,30 +724,27 @@ function Home() {
                           key="placeholder"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
-                          className="text-slate-100 flex flex-col items-center gap-8"
+                          className="text-slate-100 flex flex-col items-center"
                         >
-                          <div className="w-64 h-64 border-4 border-dashed border-slate-50 rounded-3xl flex items-center justify-center">
-                            <ImageIcon size={80} />
-                          </div>
-                          <p className="text-xl font-black">Preview</p>
+                          <QrCode size={180} className="text-slate-100 opacity-40" />
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                   <button
                     disabled={!qrDataUrl}
                     onClick={handleDownload}
                     className={cn(
-                      "w-full py-6 rounded-3xl font-black text-2xl flex items-center justify-center gap-4 transition-all shadow-2xl",
+                      "w-full py-3 md:py-6 rounded-3xl font-black text-xl md:text-2xl flex items-center justify-center gap-3 transition-all shadow-2xl",
                       qrDataUrl 
                         ? "bg-primary text-white hover:bg-[#6b24c7] shadow-primary/30 hover:shadow-primary/40 active:scale-[0.96]" 
                         : "bg-slate-100 text-slate-200 cursor-not-allowed"
                     )}
                   >
-                    <Download size={28} />
+                    <Download size={24} />
                     Download Free QR
                   </button>
                 </div>
@@ -700,7 +756,7 @@ function Home() {
         {/* Frequently Asked Questions section */}
         <section className="mt-40 space-y-20 max-w-[1200px] mx-auto px-4 md:px-12">
           <div className="text-left space-y-6 mb-20">
-            <h2 className="text-6xl md:text-7xl font-black text-slate-900 tracking-tighter">Frequently Asked Questions</h2>
+            <h2 className="text-6xl md:text-7xl font-black text-slate-900 tracking-tight">Frequently Asked Questions</h2>
             <p className="text-slate-500 text-xl font-medium">Everything you need to know about QR codes and how to use them effectively.</p>
           </div>
 
@@ -708,29 +764,17 @@ function Home() {
             <FAQItem question="Why use our Free QR Code Generator?">
               <div className="space-y-6">
                 <p>Our tool is built with three core principles in mind to provide the best experience for our users:</p>
-                <div className="space-y-8">
-                  <div className="flex gap-6">
-                    <span className="text-primary font-black text-4xl shrink-0">01.</span>
-                    <div className="space-y-2">
-                      <h4 className="font-black text-slate-900 text-xl">No Sign Up</h4>
-                      <p className="text-slate-500">Start generating immediately. We don't ask for your email or personal data. Privacy is our priority.</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-6">
-                    <span className="text-primary font-black text-4xl shrink-0">02.</span>
-                    <div className="space-y-2">
-                      <h4 className="font-black text-slate-900 text-xl">No Subscription</h4>
-                      <p className="text-slate-500">Our tool is 100% free forever. No monthly fees or hidden costs for high-res downloads.</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-6">
-                    <span className="text-primary font-black text-4xl shrink-0">03.</span>
-                    <div className="space-y-2">
-                      <h4 className="font-black text-slate-900 text-xl">High Quality</h4>
-                      <p className="text-slate-500">Download professional-grade QR codes suitable for print, business cards, and digital displays.</p>
-                    </div>
-                  </div>
-                </div>
+                <ol className="list-decimal pl-5 space-y-4">
+                  <li className="text-slate-600">
+                    <strong className="text-slate-900">No Sign Up:</strong> Start generating immediately. We don't ask for your email or personal data. Privacy is our priority.
+                  </li>
+                  <li className="text-slate-600">
+                    <strong className="text-slate-900">No Subscription:</strong> Our tool is 100% free forever. No monthly fees or hidden costs for high-res downloads.
+                  </li>
+                  <li className="text-slate-600">
+                    <strong className="text-slate-900">High Quality:</strong> Download professional-grade QR codes suitable for print, business cards, and digital displays.
+                  </li>
+                </ol>
               </div>
             </FAQItem>
 
@@ -777,13 +821,13 @@ function Home() {
         {/* Callout Section */}
         <section className="mt-40">
           <div className="bg-hero-gradient p-12 md:p-24 rounded-3xl text-center text-white space-y-10 shadow-2xl shadow-primary/20">
-            <h2 className="text-5xl md:text-7xl font-black">Ready to get started?</h2>
+            <h2 className="text-5xl md:text-7xl font-black tracking-tight">Ready to get started?</h2>
             <p className="text-white/80 text-xl md:text-2xl font-medium max-w-2xl mx-auto">
               Create your professional QR code in less than 30 seconds. No strings attached.
             </p>
             <button 
               onClick={scrollToGenerator}
-              className="bg-white text-primary px-12 py-6 rounded-3xl font-black text-2xl hover:scale-105 transition-transform shadow-xl active:scale-95"
+              className="bg-white text-primary px-8 py-4 md:px-12 md:py-6 rounded-3xl font-black text-xl md:text-2xl hover:scale-105 transition-transform shadow-xl active:scale-95"
             >
               Create QR code for free
             </button>
