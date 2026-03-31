@@ -691,14 +691,14 @@ function Home() {
           {/* Right Column: Preview */}
           <div className="lg:col-span-5">
             <div className="sticky top-8">
-              <div className="bg-white p-6 md:p-10 rounded-3xl shadow-2xl border border-slate-100 text-center space-y-6 md:space-y-10">
+              <div className="bg-white p-4 md:p-10 rounded-3xl shadow-2xl border border-slate-100 text-center space-y-4 md:space-y-10">
                 <div className="space-y-2 md:space-y-3">
                   <h2 className="text-4xl font-black text-slate-900 tracking-tight">Preview</h2>
                 </div>
 
                 <div className="relative group">
                   <div className="absolute -inset-8 bg-primary/5 rounded-3xl blur-3xl group-hover:bg-primary/10 transition-all duration-700"></div>
-                  <div className="relative bg-white p-6 md:p-10 rounded-3xl shadow-inner border border-slate-50 flex items-center justify-center min-h-[300px] md:min-h-[400px]">
+                  <div className="relative bg-white p-4 md:p-10 rounded-3xl shadow-inner border border-slate-50 flex items-center justify-center min-h-[300px] md:min-h-[400px]">
                     <AnimatePresence mode="wait">
                       {qrDataUrl ? (
                         <motion.div
@@ -738,7 +738,7 @@ function Home() {
                     disabled={!qrDataUrl}
                     onClick={handleDownload}
                     className={cn(
-                      "w-full py-3 md:py-6 rounded-3xl font-black text-xl md:text-2xl flex items-center justify-center gap-3 transition-all shadow-2xl",
+                      "w-full py-2.5 md:py-6 rounded-2xl font-black text-xl md:text-2xl flex items-center justify-center gap-3 transition-all shadow-2xl",
                       qrDataUrl 
                         ? "bg-primary text-white hover:bg-[#6b24c7] shadow-primary/30 hover:shadow-primary/40 active:scale-[0.96]" 
                         : "bg-slate-100 text-slate-200 cursor-not-allowed"
@@ -827,7 +827,7 @@ function Home() {
             </p>
             <button 
               onClick={scrollToGenerator}
-              className="bg-white text-primary px-8 py-4 md:px-12 md:py-6 rounded-3xl font-black text-xl md:text-2xl hover:scale-105 transition-transform shadow-xl active:scale-95"
+              className="bg-white text-primary px-6 py-3 md:px-12 md:py-6 rounded-2xl font-black text-xl md:text-2xl hover:scale-105 transition-transform shadow-xl active:scale-95"
             >
               Create QR code for free
             </button>
