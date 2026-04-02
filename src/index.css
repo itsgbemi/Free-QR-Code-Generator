@@ -5,7 +5,7 @@
   --color-primary-foreground: #ffffff;
   --color-secondary: #f5f3ff;
   
-  --font-sans: "Zalando Sans", "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Onest", "Outfit", ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
